@@ -43,73 +43,53 @@ int r_insert(node_t **p,long k,void *v)
 {
 	static node_t *l=NULL; // Last r_inserted
 	node_t *n=*p;
-	int problem;
+	int d; // detector
 	if (k==n->k) {
-		printf("Found.\n");
 		n->v=v;
 		return OK;
 	} else if (k<n->k) {
-		printf("Left. ");
 		if (!n->l) {
-			printf("Leaf.\n");
 			l=new_node(k,v,RED);
 			n->l=l;
-			problem=n->c?PARENT:OK;
+			d=n->c?PARENT:OK; // "If I'm red like my child, I have a problem."
 		} else
-			problem=r_insert(&n->l,k,v);
+			d=r_insert(&n->l,k,v); // "There is a problem if my child reports one."
 	} else {
-		printf("Right. ");
 		if (!n->r) {
-			printf("Leaf.\n");
 			l=new_node(k,v,RED);
 			n->r=l;
-			problem=n->c?PARENT:OK;
+			d=n->c?PARENT:OK; // "If I'm red like my child, I have a problem."
 		} else
-			problem=r_insert(&n->r,k,v);
+			d=r_insert(&n->r,k,v); // "There is a problem if my child reports one."
 	}
-	n=*p; // Update node in case rotations have occurred.
-	switch (problem) { // Act based on who detects a problem
-	case OK:
-		printf("%ld receives OK signal\n",n->k);
+	switch (d) {
+	case OK: // "My descendants have reported that all is well."
 		return OK;
-	case CHILD: // return this if possible issue with parent
-		printf("%ld receives report of possible issue with child.\n",n->k);
-		if (red(n)) {
-			printf("Issue detected; delegating to grandparent of child.\n");
-			return GRANDPARENT;
-		} else {
-			printf("No issue detected.\n");
-			return OK;
-		}
-	case PARENT: // return this if issue between self and child
-		printf("%ld detects issue between self and child; delegating.\n",n->k);
-		// delegate to grandparent for possible rotation
-		return GRANDPARENT;
-	case GRANDPARENT: // received if issue between child and grandchild
-		printf("%ld receives report of issue between child and grandchild.\n",n->k);
-		if (black(n)&&red(n->l)&&red(n->r)) {
-			printf("%ld moves black down to fix excess red on path.\n",n->k);
+	case CHILD: // "My child has reported a possible issue with me."
+		if (red(n))
+			return GRANDPARENT; // "They are right. Grandparent, what can you do?"
+		else
+			return OK; // "They are wrong. Everything is OK."
+	case PARENT: // "I have noticed an issue with my child."
+		return GRANDPARENT; // "Grandparent, what can you do?"
+	case GRANDPARENT: // "My child has reported an issue with their child."
+		if (red(n->l)&&red(n->r)) { // Two red children; push black down
 			n->c=RED;
 			n->l->c=BLACK;
 			n->r->c=BLACK;
-			return CHILD;
-		} else if (red(n->l)^red(n->r)) {
-			printf("%ld performs rotations to fix excess red on path.\n",n->k);
-			if (red(n->r)&&red(n->r->l)) {
-				printf("Rotate right to push outside. ");
+			return CHILD; // "Now I may have a problem with my parent."
+		} else if (red(n->l)^red(n->r)) { // One red, one black; perform rotations
+			if (red(n->r)&&red(n->r->l))
+			// Rotate outwards if necessary
 				rrot(&n->r);
-			} else if (red(n->l)&&red(n->l->r)) {
-				printf("Rotate left to push outside. ");
+			else if (red(n->l)&&red(n->l->r))
 				lrot(&n->l);
-			}
-			if (red(n->l)&&red(n->l->l)) {
-				printf("Rotating self right.\n");
+			// Rotate self downward
+			if (red(n->l)&&red(n->l->l))
 				rrot(p);
-			} else if (red(n->r)&&red(n->r->r)) {
-				printf("Rotating self left.\n");
+			else if (red(n->r)&&red(n->r->r))
 				lrot(p);
-			}
-			return (*p)->c?CHILD:OK;
+			return OK; // "Everything should be okay now."
 		}
 	}
 	return 0;
@@ -117,5 +97,5 @@ int r_insert(node_t **p,long k,void *v)
 void insert(node_t **p,long k,void *v)
 {
 	r_insert(p,k,v);
-	(*p)->c=BLACK;
+	(*p)->c=BLACK; // Make sure the root is a black node
 }
