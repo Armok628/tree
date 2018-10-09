@@ -100,7 +100,7 @@ void insert(node_t **p,long k,void *v)
 }
 void *lookup(node_t *n,long k)
 {
-	while (k!=n->k) {
+	while (n&&k!=n->k) {
 		if (k<n->k)
 			n=n->l;
 		else
@@ -121,3 +121,4 @@ node_t **find(node_t **p,long k)
 	else
 		return p;
 }
+
