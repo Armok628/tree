@@ -38,12 +38,11 @@ static inline bool black(node_t *n)
 {
 	return !n||!n->c;
 }
-enum {OK,CHILD,PARENT,GRANDPARENT};
 int r_insert(node_t **p,long k,void *v)
 {
 	static node_t *l=NULL; // Last r_inserted
 	node_t *n=*p;
-	int d; // detector
+	enum {OK,CHILD,PARENT,GRANDPARENT} d; // detector
 	if (k==n->k) {
 		n->v=v;
 		return OK;
@@ -98,4 +97,27 @@ void insert(node_t **p,long k,void *v)
 {
 	r_insert(p,k,v);
 	(*p)->c=BLACK; // Make sure the root is a black node
+}
+void *lookup(node_t *n,long k)
+{
+	while (k!=n->k) {
+		if (k<n->k)
+			n=n->l;
+		else
+			n=n->r;
+	}
+	if (n)
+		return n->v;
+	else
+		return NULL;
+}
+node_t **find(node_t **p,long k)
+{
+	node_t *n=*p;
+	if (k<n->k)
+		return find(&n->l,k);
+	else if (k>n->k)
+		return find(&n->r,k);
+	else
+		return p;
 }
