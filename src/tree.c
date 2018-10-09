@@ -38,11 +38,12 @@ static inline bool black(node_t *n)
 {
 	return !n||!n->c;
 }
+enum detector {OK,CHILD,PARENT,GRANDPARENT};
 int r_insert(node_t **p,long k,void *v)
 {
 	static node_t *l=NULL; // Last r_inserted
 	node_t *n=*p;
-	enum {OK,CHILD,PARENT,GRANDPARENT} d; // detector
+	enum detector d; // detector
 	if (k==n->k) {
 		n->v=v;
 		return OK;
@@ -111,14 +112,3 @@ void *lookup(node_t *n,long k)
 	else
 		return NULL;
 }
-node_t **find(node_t **p,long k)
-{
-	node_t *n=*p;
-	if (k<n->k)
-		return find(&n->l,k);
-	else if (k>n->k)
-		return find(&n->r,k);
-	else
-		return p;
-}
-
