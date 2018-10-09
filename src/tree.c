@@ -38,58 +38,75 @@ static inline bool black(node_t *n)
 {
 	return !n||!n->c;
 }
+enum {OK,CHILD,PARENT,GRANDPARENT};
 int insert(node_t **p,long k,void *v)
 {
-	static node_t *l=NULL;
-	node_t *n=*p; // n is possible parent to added node
-	printf("Inserting k=%ld.\n",k);
-	int i=0;
+	static node_t *l=NULL; // Last inserted
+	node_t *n=*p;
+	int problem;
 	if (k==n->k) {
+		printf("Found.\n");
 		n->v=v;
+		return OK;
 	} else if (k<n->k) {
-		printf("Looking left.\n");
+		printf("Left. ");
 		if (!n->l) {
-			printf("Found leaf; inserting.\n");
+			printf("Leaf.\n");
 			l=new_node(k,v,RED);
 			n->l=l;
-			return n->c==RED;
+			problem=n->c?PARENT:OK;
 		} else
-			i=insert(&n->l,k,v);
-	} else /*(k>n->k)*/ {
-		printf("Looking right.\n");
+			problem=insert(&n->l,k,v);
+	} else {
+		printf("Right. ");
 		if (!n->r) {
-			printf("Found leaf; inserting.\n");
+			printf("Leaf.\n");
 			l=new_node(k,v,RED);
 			n->r=l;
-			return n->c==RED;
+			problem=n->c?PARENT:OK;
 		} else
-			i=insert(&n->r,k,v);
+			problem=insert(&n->r,k,v);
 	}
-	if (i) {
-		printf("Red parent has red child.\n");
+	n=*p; // Update node in case rotations occurred.
+	switch (problem) { // Act based on who detects a problem
+	case OK:
+		printf("%ld receives OK signal\n",n->k);
+		return OK;
+	case CHILD: // return this if possible issue with parent
+		printf("%ld receives report of possible issue with child.\n",n->k);
+		if (red(n)) {
+			printf("Issue detected; delegating to grandparent of child.\n");
+			return GRANDPARENT;
+		} else {
+			printf("No issue detected.\n");
+			return OK;
+		}
+	case PARENT: // return this if issue between self and child
+		printf("%ld detects issue between self and child; delegating.\n",n->k);
+		// delegate to grandparent for possible rotation
+		return GRANDPARENT;
+	case GRANDPARENT: // received if issue between child and grandchild
+		printf("%ld receives report of issue between child and grandchild.\n",n->k);
 		if (black(n)&&red(n->l)&&red(n->r)) {
-			printf("Push black down from grandparent.\n");
+			printf("%ld moves black down to fix excess red on path.\n",n->k);
 			n->c=RED;
-			if (n->l)
-				n->l->c=BLACK;
-			if (n->r)
-				n->r->c=BLACK;
+			n->l->c=BLACK;
+			n->r->c=BLACK;
+			return CHILD;
 		} else if (red(n->l)^red(n->r)) {
-			printf("Rotate to fix extra redness. ");
-			// Step 1
-			if (n->l&&l==n->l->r) {
-				printf("Rotate left to move outward. ");
-				lrot(&n->l);
-			} else if (n->r&&l==n->r->l) {
-				printf("Rotate right to move outward. ");
+			printf("%ld performs rotations to fix excess red on path.\n",n->k);
+			if (red(n->r)&&red(n->r->l)) {
+				printf("Rotate right to push outside. ");
 				rrot(&n->r);
+			} else if (red(n->l)&&red(n->l->r)) {
+				printf("Rotate left to push outside. ");
+				lrot(&n->l);
 			}
-			// Step 2
-			if (l==n->l||(n->l&&l==n->l->l)) {
-				printf("Rotate right.\n");
+			if (red(n->l)&&red(n->l->l)) {
+				printf("Rotating self right.\n");
 				rrot(p);
-			} else if (l==n->r||(n->r&&l==n->r->r)) {
-				printf("Rotate right.\n");
+			} else if (red(n->r)&&red(n->r->r)) {
+				printf("Rotating self left.\n");
 				lrot(p);
 			}
 		}

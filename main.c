@@ -27,10 +27,10 @@ void print_traverse(node_t *n)
 int main(int argc,char **argv)
 {
 	srand(time(NULL));
-	node_t *n=new_node(rand()%20,NULL,0);
+	node_t *n=new_node(0,NULL,0);
 	printf("Starting with %ld\n",n->k);
-	for (int i=0;i<100;i++) {
-		insert(&n,rand()%1000,NULL);
+	for (int i=0;i<20;scanf("%d",&i)) {
+		insert(&n,i,NULL);
 		print_tree(n,1);
 	}
 	printf("sizeof(node_t): %lu\n",sizeof(node_t));
