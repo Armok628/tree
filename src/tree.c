@@ -39,9 +39,9 @@ static inline bool black(node_t *n)
 	return !n||!n->c;
 }
 enum {OK,CHILD,PARENT,GRANDPARENT};
-int insert(node_t **p,long k,void *v)
+int r_insert(node_t **p,long k,void *v)
 {
-	static node_t *l=NULL; // Last inserted
+	static node_t *l=NULL; // Last r_inserted
 	node_t *n=*p;
 	int problem;
 	if (k==n->k) {
@@ -56,7 +56,7 @@ int insert(node_t **p,long k,void *v)
 			n->l=l;
 			problem=n->c?PARENT:OK;
 		} else
-			problem=insert(&n->l,k,v);
+			problem=r_insert(&n->l,k,v);
 	} else {
 		printf("Right. ");
 		if (!n->r) {
@@ -65,7 +65,7 @@ int insert(node_t **p,long k,void *v)
 			n->r=l;
 			problem=n->c?PARENT:OK;
 		} else
-			problem=insert(&n->r,k,v);
+			problem=r_insert(&n->r,k,v);
 	}
 	n=*p; // Update node in case rotations have occurred.
 	switch (problem) { // Act based on who detects a problem
@@ -113,4 +113,9 @@ int insert(node_t **p,long k,void *v)
 		}
 	}
 	return 0;
+}
+void insert(node_t **p,long k,void *v)
+{
+	r_insert(p,k,v);
+	(*p)->c=BLACK;
 }
