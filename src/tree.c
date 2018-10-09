@@ -67,7 +67,7 @@ int insert(node_t **p,long k,void *v)
 		} else
 			problem=insert(&n->r,k,v);
 	}
-	n=*p; // Update node in case rotations occurred.
+	n=*p; // Update node in case rotations have occurred.
 	switch (problem) { // Act based on who detects a problem
 	case OK:
 		printf("%ld receives OK signal\n",n->k);
@@ -109,6 +109,7 @@ int insert(node_t **p,long k,void *v)
 				printf("Rotating self left.\n");
 				lrot(p);
 			}
+			return (*p)->c?CHILD:OK;
 		}
 	}
 	return 0;

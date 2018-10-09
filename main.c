@@ -29,7 +29,7 @@ int main(int argc,char **argv)
 	srand(time(NULL));
 	node_t *n=new_node(0,NULL,0);
 	printf("Starting with %ld\n",n->k);
-	for (int i=0;i<20;scanf("%d",&i)) {
+	for (int i=0;i<=17;i++) {
 		insert(&n,i,NULL);
 		print_tree(n,1);
 	}
