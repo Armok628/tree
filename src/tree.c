@@ -1,10 +1,10 @@
 #include "tree.h"
+enum {BLACK,RED};
 void rrot(node_t **p)
 {
 	node_t *n=*p,*l=n->l;
-	bool c=n->c;
 	n->c=l->c;
-	l->c=c;
+	l->c=RED;
 	n->l=l->r;
 	l->r=n;
 	*p=l;
@@ -12,9 +12,8 @@ void rrot(node_t **p)
 void lrot(node_t **p)
 {
 	node_t *n=*p,*r=n->r;
-	bool c=n->c;
 	n->c=r->c;
-	r->c=c;
+	r->c=BLACK;
 	n->r=r->l;
 	r->l=n;
 	*p=r;
@@ -29,7 +28,6 @@ node_t *new_node(long k,void *v,bool c)
 	n->r=NULL;
 	return n;
 }
-enum {BLACK,RED};
 static inline bool red(node_t *n)
 {
 	return n&&n->c;
@@ -38,61 +36,34 @@ static inline bool black(node_t *n)
 {
 	return !n||!n->c;
 }
-enum detector {OK,CHILD,PARENT,GRANDPARENT};
-int r_insert(node_t **p,long k,void *v)
+void fix(node_t **p)
 {
-	static node_t *l=NULL; // Last r_inserted
 	node_t *n=*p;
-	enum detector d; // detector
-	if (k==n->k) {
+	if (red(n->l))
+		rrot(p);
+	else if (red(n->r)&&red(n->r->r))
+		lrot(p);
+	n=*p;
+	if (red(n->r)&&red(n->l)) {
+		n->c=!n->c;
+		n->l->c=!n->l->c;
+		n->r->c=!n->r->c;
+	}
+}
+void r_insert(node_t **p,long k,void *v)
+{
+	node_t *n=*p;
+	if (!n) {
+		*p=new_node(k,v,RED);
+		return;
+	} else if (k==n->k) {
 		n->v=v;
-		return OK;
-	} else if (k<n->k) {
-		if (!n->l) {
-			l=new_node(k,v,RED);
-			n->l=l;
-			d=n->c?PARENT:OK; // "If I'm red like my child, I have a problem."
-		} else
-			d=r_insert(&n->l,k,v); // "There is a problem if my child reports one."
-	} else {
-		if (!n->r) {
-			l=new_node(k,v,RED);
-			n->r=l;
-			d=n->c?PARENT:OK; // "If I'm red like my child, I have a problem."
-		} else
-			d=r_insert(&n->r,k,v); // "There is a problem if my child reports one."
-	}
-	switch (d) {
-	case OK: // "My descendants have reported that all is well."
-		return OK;
-	case CHILD: // "My child has reported a possible issue with me."
-		if (red(n))
-			return GRANDPARENT; // "They are right. Grandparent, what can you do?"
-		else
-			return OK; // "They are wrong. Everything is OK."
-	case PARENT: // "I have noticed an issue with my child."
-		return GRANDPARENT; // "Grandparent, what can you do?"
-	case GRANDPARENT: // "My child has reported an issue with their child."
-		if (red(n->l)&&red(n->r)) { // Two red children; push black down
-			n->c=RED;
-			n->l->c=BLACK;
-			n->r->c=BLACK;
-			return CHILD; // "Now I may have a problem with my parent."
-		} else if (red(n->l)^red(n->r)) { // One red, one black; perform rotations
-			if (red(n->r)&&red(n->r->l))
-			// Rotate outwards if necessary
-				rrot(&n->r);
-			else if (red(n->l)&&red(n->l->r))
-				lrot(&n->l);
-			// Rotate self downward
-			if (red(n->l)&&red(n->l->l))
-				rrot(p);
-			else if (red(n->r)&&red(n->r->r))
-				lrot(p);
-			return OK; // "Everything should be okay now."
-		}
-	}
-	return 0;
+		return;
+	} else if (k<n->k)
+		r_insert(&n->l,k,v);
+	else
+		r_insert(&n->r,k,v);
+	fix(p);
 }
 void insert(node_t **p,long k,void *v)
 {
@@ -111,4 +82,41 @@ void *lookup(node_t *n,long k)
 		return n->v;
 	else
 		return NULL;
+}
+node_t *cut_max(node_t **p)
+{
+	node_t *n=*p;
+	if (n->r)
+		n=cut_max(&n->r);
+	else {
+		*p=NULL;
+		return n;
+	}
+	fix(p);
+	return n;
+}
+void expunge(node_t **p,long k)
+{
+	node_t *n=*p;
+	if (!n)
+		return;
+	if (k==n->k) {
+		if (n->l&&n->r) {
+			*p=cut_max(&n->l);
+			(*p)->c=n->c;
+			(*p)->r=n->r;
+			(*p)->l=n->l;
+		} else if (n->r)
+			*p=n->r;
+		else if (n->l)
+			*p=n->l;
+		else
+			*p=NULL;
+		free(n);
+	} else if (k>n->k)
+		expunge(&n->r,k);
+	else
+		expunge(&n->l,k);
+	if (*p)
+		fix(p);
 }

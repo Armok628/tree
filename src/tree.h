@@ -12,4 +12,5 @@ typedef struct node {
 
 node_t *new_node(long,void *,bool);
 void insert(node_t **,long,void *);
+void expunge(node_t **,long);
 #endif

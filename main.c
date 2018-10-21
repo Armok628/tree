@@ -33,5 +33,7 @@ int main(int argc,char **argv)
 		insert(&n,i,NULL);
 	print_tree(n,1);
 	printf("sizeof(node_t): %lu\n",sizeof(node_t));
+	expunge(&n,31);
+	print_tree(n,1);
 	return 0;
 }
