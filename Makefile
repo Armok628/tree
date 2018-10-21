@@ -1,5 +1,8 @@
 CC=clang
-CFLAGS=-g
+CFLAGS=-g -std=gnu99 -Wall -Wextra -Wpedantic
 
-main:
-	$(CC) $(CFLAGS) main.c src/*.c
+test: test.c src/*
+	$(CC) test.c src/*.c $(CFLAGS)
+
+words: words.c src/*
+	$(CC) words.c src/*.c $(CFLAGS)

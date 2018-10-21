@@ -32,18 +32,17 @@ static inline bool red(node_t *n)
 {
 	return n&&n->c;
 }
-static inline bool black(node_t *n)
-{
-	return !n||!n->c;
-}
 void fix(node_t **p)
 {
 	node_t *n=*p;
-	if (red(n->l))
+	if (red(n->l)) {
 		rrot(p);
-	else if (red(n->r)&&red(n->r->r))
+		n=*p;
+	}
+	if (red(n->r)&&red(n->r->r)) {
 		lrot(p);
-	n=*p;
+		n=*p;
+	}
 	if (red(n->r)&&red(n->l)) {
 		n->c=!n->c;
 		n->l->c=!n->l->c;
@@ -68,10 +67,11 @@ void r_insert(node_t **p,long k,void *v)
 void insert(node_t **p,long k,void *v)
 {
 	r_insert(p,k,v);
-	(*p)->c=BLACK; // Make sure the root is a black node
+	(*p)->c=BLACK;
 }
-void *lookup(node_t *n,long k)
+void *lookup(node_t **p,long k)
 {
+	node_t *n=*p;
 	while (n&&k!=n->k) {
 		if (k<n->k)
 			n=n->l;
@@ -119,4 +119,14 @@ void expunge(node_t **p,long k)
 		expunge(&n->l,k);
 	if (*p)
 		fix(p);
+}
+void free_tree(node_t **p)
+{
+	node_t *n=*p;
+	if (!n)
+		return;
+	free_tree(&n->l);
+	free_tree(&n->r);
+	free(n);
+	*p=NULL;
 }

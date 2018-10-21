@@ -12,5 +12,7 @@ typedef struct node {
 
 node_t *new_node(long,void *,bool);
 void insert(node_t **,long,void *);
+void *lookup(node_t **,long);
 void expunge(node_t **,long);
+void free_tree(node_t **);
 #endif
